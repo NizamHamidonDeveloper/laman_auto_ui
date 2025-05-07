@@ -1,9 +1,13 @@
 "use client";
-import { useEffect, useState, useCallback } from 'react';
+
+import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useQuery } from '@tanstack/react-query';
+import PageSizeSelector from '@/components/PageSizeSelector';
 
 type InventoryItem = {
   id: string;
@@ -18,202 +22,138 @@ type InventoryItem = {
 export default function VehicleInventoryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [vehicleIdFilter, setVehicleIdFilter] = useState('');
+  const [dealersIdFilter, setDealersIdFilter] = useState('');
   const supabase = createClient();
 
-  // Read params from URL
-  const page = Number(searchParams.get('page')) || 1;
-  const pageSize = Number(searchParams.get('pageSize')) || 10;
-  const sortBy = searchParams.get('sortBy') || 'id';
-  const sortDir = searchParams.get('sortDir') === 'desc' ? 'desc' : 'asc';
-  const vehicleIdFilter = searchParams.get('vehicle_id') || '';
-  const dealersIdFilter = searchParams.get('dealers_id') || '';
+  const fetchInventory = async () => {
+    let query = supabase
+      .from('vehicle_inventory')
+      .select('*', { count: 'exact' });
 
-  // Build URL for navigation
-  const buildUrl = useCallback((paramsObj: Record<string, string | number>) => {
-    const sp = new URLSearchParams({
-      page: String(paramsObj.page ?? page),
-      pageSize: String(paramsObj.pageSize ?? pageSize),
-      sortBy: String(paramsObj.sortBy ?? sortBy),
-      sortDir: String(paramsObj.sortDir ?? sortDir),
-      vehicle_id: String(paramsObj.vehicle_id ?? vehicleIdFilter),
-      dealers_id: String(paramsObj.dealers_id ?? dealersIdFilter),
-    });
-    return `/vehicle_inventory?${sp.toString()}`;
-  }, [page, pageSize, sortBy, sortDir, vehicleIdFilter, dealersIdFilter]);
+    if (vehicleIdFilter) {
+      query = query.eq('vehicle_id', vehicleIdFilter);
+    }
+    if (dealersIdFilter) {
+      query = query.eq('dealers_id', dealersIdFilter);
+    }
 
-  // Fetch data from Supabase
-  useEffect(() => {
-    const fetchInventory = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        let query = supabase
-          .from('vehicle_inventory')
-          .select('*', { count: 'exact' });
+    const { data, error, count } = await query;
 
-        if (vehicleIdFilter) {
-          query = query.eq('vehicle_id', vehicleIdFilter);
-        }
-        if (dealersIdFilter) {
-          query = query.eq('dealers_id', dealersIdFilter);
-        }
+    if (error) throw error;
+    return { data, count };
+  };
 
-        query = query.order(sortBy, { ascending: sortDir === 'asc' });
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize - 1;
-        query = query.range(from, to);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['inventory', vehicleIdFilter, dealersIdFilter],
+    queryFn: fetchInventory
+  });
 
-        const { data, error, count } = await query;
+  const inventory = data?.data || [];
+  const totalItems = data?.count || 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedInventory = inventory.slice(startIndex, endIndex);
 
-        if (error) {
-          throw error;
-        }
-
-        setInventory(data || []);
-        setCount(count || 0);
-      } catch (err) {
-        console.error('Error fetching inventory:', err);
-        setError(err instanceof Error ? err.message : 'Failed to fetch inventory');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInventory();
-  }, [page, pageSize, sortBy, sortDir, vehicleIdFilter, dealersIdFilter]);
-
-  const columns = [
-    { key: 'id', label: 'ID' },
-    { key: 'vehicle_id', label: 'Vehicle ID' },
-    { key: 'dealers_id', label: 'Dealer ID' },
-    { key: 'status', label: 'Status' },
-    { key: 'price', label: 'Price' },
-    { key: 'created_at', label: 'Created At' },
-    { key: 'updated_at', label: 'Updated At' },
-  ];
+  if (isLoading) return <div className="text-foreground">Loading...</div>;
+  if (error) return <div className="text-destructive">Error loading inventory: {error.message}</div>;
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
+    <div className="p-6 bg-background min-h-screen">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-foreground">Vehicle Inventory</h1>
-        <Link 
-          href="/dashboard" 
-          className="text-primary hover:text-primary/80 transition-colors"
-        >
-          &larr; Back to Dashboard
-        </Link>
+        <Button variant="outline" onClick={() => router.push('/')} className="border-border hover:bg-muted">
+          Back to Dashboard
+        </Button>
       </div>
 
       <div className="mb-4 flex gap-4 items-center">
-        <input
+        <Input
           type="text"
           placeholder="Filter by vehicle ID..."
           value={vehicleIdFilter}
-          onChange={(e) => router.push(buildUrl({ vehicle_id: e.target.value, page: 1 }))}
-          className="border rounded px-3 py-1 bg-background text-foreground"
+          onChange={(e) => setVehicleIdFilter(e.target.value)}
+          className="max-w-sm bg-background text-foreground border-border"
         />
-        <input
+        <Input
           type="text"
           placeholder="Filter by dealer ID..."
           value={dealersIdFilter}
-          onChange={(e) => router.push(buildUrl({ dealers_id: e.target.value, page: 1 }))}
-          className="border rounded px-3 py-1 bg-background text-foreground"
+          onChange={(e) => setDealersIdFilter(e.target.value)}
+          className="max-w-sm bg-background text-foreground border-border"
+        />
+        <PageSizeSelector
+          pageSize={pageSize}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
         />
       </div>
 
-      {loading ? (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-        </div>
-      ) : error ? (
-        <div className="text-destructive text-center p-4 bg-destructive/10 rounded-lg">
-          <p className="font-medium">Error loading inventory</p>
-          <p className="text-sm mt-1">{error}</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {columns.map((col) => (
-                  <TableHead key={col.key}>
-                    <button
-                      onClick={() => {
-                        router.push(buildUrl({ 
-                          sortBy: col.key, 
-                          sortDir: sortBy === col.key && sortDir === 'asc' ? 'desc' : 'asc' 
-                        }));
-                      }}
-                      className="cursor-pointer hover:underline flex items-center gap-1 bg-transparent border-none p-0"
-                    >
-                      {col.label}
-                      {sortBy === col.key ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                    </button>
-                  </TableHead>
-                ))}
+      <div className="rounded-md border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-foreground">ID</TableHead>
+              <TableHead className="text-foreground">Vehicle ID</TableHead>
+              <TableHead className="text-foreground">Dealer ID</TableHead>
+              <TableHead className="text-foreground">Status</TableHead>
+              <TableHead className="text-foreground">Price</TableHead>
+              <TableHead className="text-foreground">Created At</TableHead>
+              <TableHead className="text-foreground">Updated At</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedInventory.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="text-foreground">{item.id}</TableCell>
+                <TableCell className="text-foreground">{item.vehicle_id}</TableCell>
+                <TableCell className="text-foreground">{item.dealers_id}</TableCell>
+                <TableCell>
+                  <span className={`font-medium ${
+                    item.status === 'available' ? 'text-green-600 dark:text-green-400' : 
+                    item.status === 'pending' ? 'text-yellow-600 dark:text-yellow-400' : 
+                    'text-red-600 dark:text-red-400'
+                  }`}>
+                    {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                  </span>
+                </TableCell>
+                <TableCell className="text-foreground">${item.price?.toLocaleString()}</TableCell>
+                <TableCell className="text-foreground">{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                <TableCell className="text-foreground">{new Date(item.updated_at).toLocaleDateString()}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inventory.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.id}</TableCell>
-                  <TableCell>{item.vehicle_id}</TableCell>
-                  <TableCell>{item.dealers_id}</TableCell>
-                  <TableCell>
-                    <span className={`font-medium ${
-                      item.status === 'available' ? 'text-green-600' : 
-                      item.status === 'pending' ? 'text-yellow-600' : 
-                      'text-red-600'
-                    }`}>
-                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                    </span>
-                  </TableCell>
-                  <TableCell>${item.price?.toLocaleString()}</TableCell>
-                  <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(item.updated_at).toLocaleDateString()}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-          {count > 0 && (
-            <div className="mt-4 flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, count)} of {count} items
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => router.push(buildUrl({ page: page > 1 ? page - 1 : 1 }))}
-                  disabled={page === 1}
-                  className="px-3 py-1 rounded bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => router.push(buildUrl({ page: page + 1 }))}
-                  disabled={count && page >= Math.ceil(count / pageSize)}
-                  className="px-3 py-1 rounded bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-                <select
-                  value={pageSize}
-                  onChange={(e) => router.push(buildUrl({ pageSize: e.target.value, page: 1 }))}
-                  className="border rounded px-2 py-1 bg-background text-foreground"
-                >
-                  {[10, 20, 50, 100].map(size => (
-                    <option key={size} value={size}>{size} per page</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
+      <div className="mt-4 flex items-center justify-between text-foreground">
+        <div>
+          Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} items
         </div>
-      )}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="border-border hover:bg-muted"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage >= totalPages}
+            className="border-border hover:bg-muted"
+          >
+            Next
+          </Button>
+        </div>
+      </div>
     </div>
   );
 } 

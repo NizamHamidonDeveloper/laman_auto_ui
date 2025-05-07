@@ -39,55 +39,55 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-background min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {isLoading ? (
           Array(4).fill(0).map((_, index) => (
-            <Card key={index} className="animate-pulse">
+            <Card key={index} className="animate-pulse bg-muted/50">
               <CardHeader className="pb-2">
-                <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                <div className="h-4 w-24 bg-muted rounded"></div>
               </CardHeader>
               <CardContent>
-                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                <div className="h-8 w-16 bg-muted rounded"></div>
               </CardContent>
             </Card>
           ))
         ) : (
           <>
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Total Users</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total Users</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-semibold text-gray-900">{stats?.users}</p>
+                <p className="text-3xl font-semibold text-foreground">{stats?.users}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Dealer Accounts</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Dealer Accounts</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-semibold text-gray-900">{stats?.dealers}</p>
+                <p className="text-3xl font-semibold text-foreground">{stats?.dealers}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Vehicles</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Vehicles</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-semibold text-gray-900">{stats?.vehicles}</p>
+                <p className="text-3xl font-semibold text-foreground">{stats?.vehicles}</p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Loan Applications</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Loan Applications</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-semibold text-gray-900">{stats?.applications}</p>
+                <p className="text-3xl font-semibold text-foreground">{stats?.applications}</p>
               </CardContent>
             </Card>
           </>

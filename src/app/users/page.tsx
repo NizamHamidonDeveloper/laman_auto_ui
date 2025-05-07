@@ -47,13 +47,13 @@ export default function UsersPage() {
     user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error loading users</div>;
+  if (isLoading) return <div className="text-foreground">Loading...</div>;
+  if (error) return <div className="text-destructive">Error loading users</div>;
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-background min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Users Management</h1>
+        <h1 className="text-2xl font-bold text-foreground">Users Management</h1>
         <Button onClick={() => setIsModalOpen(true)}>Add New User</Button>
       </div>
 
@@ -63,42 +63,45 @@ export default function UsersPage() {
           placeholder="Search users..."
           value={searchTerm}
           onChange={handleSearch}
-          className="max-w-sm"
+          className="max-w-sm bg-background text-foreground border-border"
         />
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Email</TableHead>
-            <TableHead>Full Name</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Created At</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredUsers?.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>{user.full_name}</TableCell>
-              <TableCell>{user.role}</TableCell>
-              <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Handle edit
-                  }}
-                >
-                  Edit
-                </Button>
-              </TableCell>
+      <div className="rounded-md border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-foreground">Email</TableHead>
+              <TableHead className="text-foreground">Full Name</TableHead>
+              <TableHead className="text-foreground">Role</TableHead>
+              <TableHead className="text-foreground">Created At</TableHead>
+              <TableHead className="text-foreground">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {filteredUsers?.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell className="text-foreground">{user.email}</TableCell>
+                <TableCell className="text-foreground">{user.full_name}</TableCell>
+                <TableCell className="text-foreground">{user.role}</TableCell>
+                <TableCell className="text-foreground">{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Handle edit
+                    }}
+                    className="border-border hover:bg-muted"
+                  >
+                    Edit
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <UserModal
         isOpen={isModalOpen}

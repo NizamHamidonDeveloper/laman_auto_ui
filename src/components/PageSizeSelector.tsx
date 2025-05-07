@@ -1,40 +1,33 @@
 "use client";
-import { useRouter } from 'next/navigation';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface PageSizeSelectorProps {
-  pageSize: string;
-  sortBy: string;
-  sortDir: string;
-  filter: string;
+  pageSize: number;
+  onPageSizeChange: (size: number) => void;
 }
 
-export default function PageSizeSelector({ pageSize, sortBy, sortDir, filter }: PageSizeSelectorProps) {
-  const router = useRouter();
-
-  function buildUrl(newPageSize: string) {
-    const sp = new URLSearchParams({
-      page: '1',
-      pageSize: newPageSize,
-      sortBy,
-      sortDir,
-      filter,
-    });
-    return `/users?${sp.toString()}`;
-  }
-
+export default function PageSizeSelector({ pageSize, onPageSizeChange }: PageSizeSelectorProps) {
   return (
-    <label>
-      Page Size:
-      <select
-        name="pageSize"
-        value={pageSize}
-        onChange={e => router.push(buildUrl(e.target.value))}
-        className="ml-2 border rounded px-2 py-1"
-      >
-        {[5, 10, 20, 50].map(size => (
-          <option key={size} value={size}>{size}</option>
-        ))}
-      </select>
-    </label>
+    <Select
+      value={String(pageSize)}
+      onValueChange={(value) => onPageSizeChange(Number(value))}
+    >
+      <SelectTrigger className="w-[180px] bg-background text-foreground border-border">
+        <SelectValue placeholder="Select page size" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="10">10 per page</SelectItem>
+        <SelectItem value="20">20 per page</SelectItem>
+        <SelectItem value="50">50 per page</SelectItem>
+        <SelectItem value="100">100 per page</SelectItem>
+      </SelectContent>
+    </Select>
   );
 } 
