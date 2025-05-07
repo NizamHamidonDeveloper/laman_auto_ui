@@ -10,10 +10,11 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { Home, Users, Car, Palette, ClipboardList, FileText } from "lucide-react";
+import { Home, Users, Car, Palette, ClipboardList, FileText, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { createClient } from "@/lib/supabase/client";
 
 const items = [
   { title: "Dashboard", url: "/", icon: Home },
@@ -27,6 +28,13 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    window.location.href = '/login';
+  };
+
   return (
     <Sidebar className="w-[250px] shrink-0">
       <SidebarContent>
@@ -52,6 +60,15 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <div className="mt-auto p-4">
+        <SidebarMenuButton
+          onClick={handleLogout}
+          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Logout</span>
+        </SidebarMenuButton>
+      </div>
     </Sidebar>
   );
 } 

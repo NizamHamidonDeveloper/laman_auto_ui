@@ -1,145 +1,159 @@
 "use client";
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+type VehicleColor = {
+  id: string;
+  name: string;
+  hex_code: string;
+  created_at: string;
+  [key: string]: any;
+};
+
 export default function VehicleColorsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [colors, setColors] = useState<any[]>([]);
+  const [colors, setColors] = useState<VehicleColor[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [count, setCount] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
+  const supabase = createClient();
 
-  // Read params from URL
-  const page = Number(searchParams.get('page')) || 1;
-  const pageSize = Number(searchParams.get('pageSize')) || 10;
-  const sortBy = searchParams.get('sortBy') || 'id';
-  const sortDir = searchParams.get('sortDir') === 'desc' ? 'desc' : 'asc';
-  const colorNameFilter = searchParams.get('color_name') || '';
-  const vehicleIdFilter = searchParams.get('vehicle_id') || '';
+  const page = parseInt(searchParams.get('page') || '1');
+  const pageSize = parseInt(searchParams.get('pageSize') || '10');
+  const sortBy = searchParams.get('sortBy') || 'name';
+  const sortDir = searchParams.get('sortDir') || 'asc';
+  const search = searchParams.get('search') || '';
 
-  // Build URL for navigation
   const buildUrl = useCallback((paramsObj: Record<string, string | number>) => {
     const sp = new URLSearchParams({
       page: String(paramsObj.page ?? page),
       pageSize: String(paramsObj.pageSize ?? pageSize),
       sortBy: String(paramsObj.sortBy ?? sortBy),
       sortDir: String(paramsObj.sortDir ?? sortDir),
-      color_name: String(paramsObj.color_name ?? colorNameFilter),
-      vehicle_id: String(paramsObj.vehicle_id ?? vehicleIdFilter),
+      search: String(paramsObj.search ?? search),
     });
     return `/vehicle_colors?${sp.toString()}`;
-  }, [page, pageSize, sortBy, sortDir, colorNameFilter, vehicleIdFilter]);
+  }, [page, pageSize, sortBy, sortDir, search]);
 
-  // Fetch data from Supabase
   useEffect(() => {
-    setLoading(true);
+    setIsLoading(true);
     let query = supabase.from('vehicle_colors').select('*', { count: 'exact' });
-    if (colorNameFilter) {
-      query = query.ilike('color_name', `%${colorNameFilter}%`);
-    }
-    if (vehicleIdFilter) {
-      query = query.eq('vehicle_id', vehicleIdFilter);
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
     }
     query = query.order(sortBy, { ascending: sortDir === 'asc' });
-    const from = (page - 1) * pageSize;
-    const to = from + pageSize - 1;
-    query = query.range(from, to);
+    query = query.range((page - 1) * pageSize, page * pageSize - 1);
+
     query.then(({ data, error, count }) => {
       setColors(data || []);
       setCount(count || 0);
-      setLoading(false);
+      setError(error ? error.message : null);
+      setIsLoading(false);
     });
-  }, [page, pageSize, sortBy, sortDir, colorNameFilter, vehicleIdFilter]);
+  }, [page, pageSize, sortBy, sortDir, search]);
 
   return (
-    <div className="p-8">
-      <Link href="/" className="inline-block mb-4 font-semibold bg-white px-4 py-2 rounded shadow border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition">
-        &larr; Back to Dashboard
-      </Link>
-      <h1 className="text-2xl font-bold mb-6">All Vehicle Colors</h1>
-      <form className="mb-4 flex gap-4 items-center" action="/vehicle_colors" method="get" onSubmit={e => { e.preventDefault(); router.push(buildUrl({ color_name: (e.target as any).color_name.value, vehicle_id: (e.target as any).vehicle_id.value, page: 1 })); }}>
-        <input
-          type="text"
-          name="color_name"
-          placeholder="Filter by color name..."
-          defaultValue={colorNameFilter}
-          className="border px-2 py-1 rounded"
-        />
-        <input
-          type="text"
-          name="vehicle_id"
-          placeholder="Filter by vehicle_id..."
-          defaultValue={vehicleIdFilter}
-          className="border px-2 py-1 rounded"
-        />
-        <button type="submit" className="bg-gray-900 text-white px-3 py-1 rounded">Filter</button>
-      </form>
-      {loading ? (
-        <div className="flex justify-center items-center h-40">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-foreground">Vehicle Colors</h1>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="border rounded px-3 py-1 bg-background text-foreground"
+            value={search}
+            onChange={(e) => {
+              router.push(buildUrl({ search: e.target.value }));
+            }}
+          />
+          <select
+            className="border rounded px-3 py-1 bg-background text-foreground"
+            value={pageSize}
+            onChange={(e) => {
+              router.push(buildUrl({ pageSize: e.target.value }));
+            }}
+          >
+            <option value="10">10 per page</option>
+            <option value="20">20 per page</option>
+            <option value="50">50 per page</option>
+          </select>
         </div>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : error ? (
+        <div className="text-destructive text-center">{error}</div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {Object.keys(colors[0] || {}).map((col) => (
-                <TableHead key={col}>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
                   <button
                     onClick={() => {
-                      router.push(buildUrl({ sortBy: col, sortDir: sortBy === col && sortDir === 'asc' ? 'desc' : 'asc' }));
+                      router.push(buildUrl({ 
+                        sortBy: 'name', 
+                        sortDir: sortBy === 'name' && sortDir === 'asc' ? 'desc' : 'asc' 
+                      }));
                     }}
-                    className="cursor-pointer hover:underline flex items-center gap-1 bg-transparent border-none p-0"
+                    className="cursor-pointer hover:underline flex items-center gap-1"
                   >
-                    {col}
-                    {sortBy === col ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+                    Name
+                    {sortBy === 'name' ? (sortDir === 'asc' ? '▲' : '▼') : ''}
                   </button>
                 </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {colors.map((color: any) => (
-              <TableRow key={color.id}>
-                {Object.values(color).map((val, idx) => (
-                  <TableCell key={idx}>
-                    {typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val)}
-                  </TableCell>
-                ))}
+                <TableHead>Color</TableHead>
+                <TableHead>Created At</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {colors.map((color) => (
+                <TableRow key={color.id}>
+                  <TableCell>{color.name}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-6 h-6 rounded-full border" 
+                        style={{ backgroundColor: color.hex_code }}
+                      />
+                      {color.hex_code}
+                    </div>
+                  </TableCell>
+                  <TableCell>{new Date(color.created_at).toLocaleDateString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
-      <div className="flex items-center gap-4 mt-4">
-        <span>
-          Page {page} of {count ? Math.ceil(count / pageSize) : 1}
-        </span>
-        <button
-          onClick={() => router.push(buildUrl({ page: page > 1 ? page - 1 : 1 }))}
-          className={`px-3 py-1 rounded ${page === 1 ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white'}`}
-          disabled={page === 1}
-        >
-          Previous
-        </button>
-        <button
-          onClick={() => router.push(buildUrl({ page: page + 1 }))}
-          className={`px-3 py-1 rounded ${(count && page >= Math.ceil(count / pageSize)) ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white'}`}
-          disabled={!!count && page >= Math.ceil(count / pageSize)}
-        >
-          Next
-        </button>
-        <select
-          value={pageSize}
-          onChange={e => router.push(buildUrl({ pageSize: e.target.value, page: 1 }))}
-          className="ml-2 border rounded px-2 py-1"
-        >
-          {[5, 10, 20, 50].map(size => (
-            <option key={size} value={size}>{size}</option>
-          ))}
-        </select>
+
+      <div className="mt-4 flex justify-between items-center">
+        <div className="text-sm text-muted-foreground">
+          Showing {colors.length} of {count} colors
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => router.push(buildUrl({ page: page - 1 }))}
+            disabled={page === 1}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => router.push(buildUrl({ page: page + 1 }))}
+            disabled={page * pageSize >= count}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

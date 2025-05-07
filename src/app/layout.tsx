@@ -1,43 +1,36 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Providers from "./providers";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/AppSidebar";
-import { ThemeProvider } from "@/components/theme-provider";
+import Providers from "@/components/providers";
+import Sidebar from "@/components/Sidebar";
+import { createClient } from "@/lib/supabase/server";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Laman Auto Admin",
-  description: "Admin dashboard for Laman Auto",
+  title: "Laman Auto UI",
+  description: "Laman Auto UI Dashboard",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Providers>
-            <SidebarProvider>
-              <div className="flex h-screen w-full">
-                <AppSidebar />
-                <main className="flex-1 p-6 overflow-auto w-full">
-                  {children}
-                </main>
-              </div>
-            </SidebarProvider>
-          </Providers>
-        </ThemeProvider>
+        <Providers>
+          <div className="flex min-h-screen bg-gray-50">
+            {user && <Sidebar />}
+            <div className={`flex-1 ${user ? 'ml-64' : ''}`}>
+              {children}
+            </div>
+          </div>
+        </Providers>
       </body>
     </html>
   );
