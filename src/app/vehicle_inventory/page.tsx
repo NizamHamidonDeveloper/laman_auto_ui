@@ -36,7 +36,7 @@ export default function VehicleInventoryPage() {
   // Fetch data from Supabase
   useEffect(() => {
     setLoading(true);
-    let query = supabase.from('vehicle_inventory').select('*', { count: 'exact' });
+    let query = supabase.from('vehicle_inventory_2025').select('*', { count: 'exact' });
     if (vehicleIdFilter) {
       query = query.eq('vehicle_id', vehicleIdFilter);
     }
