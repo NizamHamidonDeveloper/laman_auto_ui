@@ -69,9 +69,6 @@ export default function VehiclesPage() {
         <h1 className="text-2xl font-bold text-foreground">Vehicles Management</h1>
         <div className="flex gap-4">
           <Button onClick={() => setIsModalOpen(true)}>Add New Vehicle</Button>
-          <Button variant="outline" onClick={() => router.push('/')} className="border-border hover:bg-muted">
-            Back to Dashboard
-          </Button>
         </div>
       </div>
 

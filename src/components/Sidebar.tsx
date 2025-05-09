@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -50,12 +52,14 @@ export default function Sidebar() {
         </div>
       </div>
       <div className="p-4 border-t border-border">
-        <button
+        <Button
+          variant="destructive"
+          className="w-full justify-start"
           onClick={handleLogout}
-          className="w-full p-3 text-left text-foreground hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors"
         >
+          <LogOut className="mr-2 h-4 w-4" />
           Logout
-        </button>
+        </Button>
       </div>
     </div>
   );
