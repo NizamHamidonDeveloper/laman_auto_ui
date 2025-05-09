@@ -1,128 +1,120 @@
+"use client";
+
 import Link from 'next/link';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@/lib/supabase/client';
 import React from 'react';
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from '@/components/ui/table';
 import PageSizeSelector from '@/components/PageSizeSelector';
+import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
 
-export default async function LoanApplicationsPage(
-  _props: any,
-  context?: { searchParams?: URLSearchParams }
-) {
-  const searchParams = context?.searchParams ?? new URLSearchParams();
-  const page = Number(searchParams.get('page')) || 1;
-  const pageSize = Number(searchParams.get('pageSize')) || 10;
-  const sortBy = searchParams.get('sortBy') || 'id';
-  const sortDir = searchParams.get('sortDir') === 'desc' ? 'desc' : 'asc';
-  const userIdFilter = searchParams.get('user_id') || '';
-  const statusFilter = searchParams.get('loan_application_status') || '';
+export default function LoanApplicationsPage() {
+  const [pageSize, setPageSize] = React.useState(10);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const supabase = createClient();
 
-  let query = supabase.from('loan_applications').select('*', { count: 'exact' });
-  if (userIdFilter) {
-    query = query.eq('user_id', userIdFilter);
-  }
-  if (statusFilter) {
-    query = query.ilike('loan_application_status', `%${statusFilter}%`);
-  }
-  query = query.order(sortBy, { ascending: sortDir === 'asc' });
-  const from = (page - 1) * pageSize;
-  const to = from + pageSize - 1;
-  query = query.range(from, to);
+  const fetchApplications = async () => {
+    const { data, error } = await supabase
+      .from('loan_applications')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  const { data: loans, error, count } = await query;
+    if (error) throw error;
+    return data;
+  };
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error fetching loan applications: {error.message}</div>;
-  }
+  const { data: applications, isLoading, error } = useQuery({
+    queryKey: ['loanApplications'],
+    queryFn: fetchApplications
+  });
 
-  if (!loans) {
-    return <div className="p-4">No loan applications found.</div>;
-  }
+  const totalItems = applications?.length || 0;
+  const totalPages = Math.ceil(totalItems / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedApplications = applications?.slice(startIndex, endIndex);
 
-  function buildUrl(paramsObj: Record<string, string | number>) {
-    const sp = new URLSearchParams({
-      page: String(paramsObj.page ?? page),
-      pageSize: String(paramsObj.pageSize ?? pageSize),
-      sortBy: String(paramsObj.sortBy ?? sortBy),
-      sortDir: String(paramsObj.sortDir ?? sortDir),
-      user_id: String(paramsObj.user_id ?? userIdFilter),
-      loan_application_status: String(paramsObj.loan_application_status ?? statusFilter),
-    });
-    return `/loan_applications?${sp.toString()}`;
-  }
+  if (isLoading) return <div className="text-foreground">Loading...</div>;
+  if (error) return <div className="text-destructive">Error loading applications</div>;
 
   return (
-    <div className="p-8">
-      <Link href="/" className="inline-block mb-4 font-semibold bg-white px-4 py-2 rounded shadow border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition">
-        &larr; Back to Dashboard
-      </Link>
-      <h1 className="text-2xl font-bold mb-6">All Loan Applications</h1>
-      <form className="mb-4 flex gap-4 items-center" action="/loan_applications" method="get">
-        <input
-          type="text"
-          name="user_id"
-          placeholder="Filter by user_id..."
-          defaultValue={userIdFilter}
-          className="border px-2 py-1 rounded"
-        />
-        <input
-          type="text"
-          name="loan_application_status"
-          placeholder="Filter by status..."
-          defaultValue={statusFilter}
-          className="border px-2 py-1 rounded"
-        />
-        <button type="submit" className="bg-gray-900 text-white px-3 py-1 rounded">Filter</button>
-      </form>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {Object.keys(loans[0] || {}).map((col) => (
-              <TableHead key={col}>
-                <a
-                  href={buildUrl({ sortBy: col, sortDir: sortBy === col && sortDir === 'asc' ? 'desc' : 'asc' })}
-                  className="cursor-pointer hover:underline flex items-center gap-1"
-                >
-                  {col}
-                  {sortBy === col ? (sortDir === 'asc' ? '▲' : '▼') : ''}
-                </a>
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {loans.map((loan: any) => (
-            <TableRow key={loan.id}>
-              {Object.values(loan).map((val, idx) => (
-                <TableCell key={idx}>
-                  {typeof val === 'object' && val !== null ? JSON.stringify(val) : String(val)}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="flex items-center gap-4 mt-4">
-        <span>
-          Page {page} of {count ? Math.ceil(count / pageSize) : 1}
-        </span>
-        <a
-          href={buildUrl({ page: String(page > 1 ? page - 1 : 1) })}
-          className={`px-3 py-1 rounded ${page === 1 ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white'}`}
-        >
-          Previous
-        </a>
-        <a
-          href={buildUrl({ page: String(page + 1) })}
-          className={`px-3 py-1 rounded ${(count && page >= Math.ceil(count / pageSize)) ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 text-white'}`}
-        >
-          Next
-        </a>
+    <div className="p-6 bg-background min-h-screen">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-foreground">Loan Applications</h1>
+        <div className="flex gap-4">
+          <Button variant="outline" onClick={() => window.history.back()} className="border-border hover:bg-muted">
+            Back
+          </Button>
+        </div>
+      </div>
+
+      <div className="mb-4">
         <PageSizeSelector
-          pageSize={String(pageSize)}
-          sortBy={sortBy}
-          sortDir={sortDir}
-          filter={statusFilter}
+          pageSize={pageSize}
+          onPageSizeChange={(size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          }}
         />
+      </div>
+
+      <div className="rounded-md border border-border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-foreground">Application ID</TableHead>
+              <TableHead className="text-foreground">User</TableHead>
+              <TableHead className="text-foreground">Vehicle</TableHead>
+              <TableHead className="text-foreground">Status</TableHead>
+              <TableHead className="text-foreground">Amount</TableHead>
+              <TableHead className="text-foreground">Created At</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginatedApplications?.map((application) => (
+              <TableRow key={application.id}>
+                <TableCell className="text-foreground">{application.id}</TableCell>
+                <TableCell className="text-foreground">{application.user_id}</TableCell>
+                <TableCell className="text-foreground">{application.vehicle_id}</TableCell>
+                <TableCell>
+                  <span className={`font-medium ${
+                    application.status === 'approved' ? 'text-green-600 dark:text-green-400' :
+                    application.status === 'rejected' ? 'text-red-600 dark:text-red-400' :
+                    'text-yellow-600 dark:text-yellow-400'
+                  }`}>
+                    {application.status}
+                  </span>
+                </TableCell>
+                <TableCell className="text-foreground">${application.loan_amount}</TableCell>
+                <TableCell className="text-foreground">{new Date(application.created_at).toLocaleDateString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between text-foreground">
+        <div>
+          Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} items
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="border-border hover:bg-muted"
+          >
+            Previous
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage >= totalPages}
+            className="border-border hover:bg-muted"
+          >
+            Next
+          </Button>
+        </div>
       </div>
     </div>
   );
