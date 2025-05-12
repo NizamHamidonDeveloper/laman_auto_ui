@@ -12,8 +12,16 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import VehicleModal from '@/components/VehicleModal';
+import ConfirmModal from '@/components/ConfirmModal';
+import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function VehiclesPage() {
   const router = useRouter();
@@ -21,7 +29,11 @@ export default function VehiclesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const supabase = createClient();
+  const queryClient = useQueryClient();
 
   const fetchVehicles = async () => {
     const { data, error } = await supabase
@@ -37,6 +49,33 @@ export default function VehiclesPage() {
     queryKey: ['vehicles'],
     queryFn: fetchVehicles
   });
+
+  const handleEdit = (vehicle: any) => {
+    setSelectedVehicle(vehicle);
+    setModalMode('edit');
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (vehicle: any) => {
+    setSelectedVehicle(vehicle);
+    setIsConfirmModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .delete()
+        .eq('id', selectedVehicle.id);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      setIsConfirmModalOpen(false);
+    } catch (err: any) {
+      console.error('Error deleting vehicle:', err);
+    }
+  };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -68,7 +107,11 @@ export default function VehiclesPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-foreground">Vehicles Management</h1>
         <div className="flex gap-4">
-          <Button onClick={() => setIsModalOpen(true)}>Add New Vehicle</Button>
+          <Button onClick={() => {
+            setModalMode('add');
+            setSelectedVehicle(null);
+            setIsModalOpen(true);
+          }}>Add New Vehicle</Button>
         </div>
       </div>
 
@@ -104,6 +147,7 @@ export default function VehiclesPage() {
               <TableHead className="text-foreground">Seating</TableHead>
               <TableHead className="text-foreground">Status</TableHead>
               <TableHead className="text-foreground">Created At</TableHead>
+              <TableHead className="text-foreground">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -123,6 +167,25 @@ export default function VehiclesPage() {
                   </span>
                 </TableCell>
                 <TableCell className="text-foreground">{new Date(vehicle.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEdit(vehicle)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDelete(vehicle)}>
+                        <Trash className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -155,7 +218,28 @@ export default function VehiclesPage() {
 
       <VehicleModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedVehicle(null);
+        }}
+        mode={modalMode}
+        vehicleId={selectedVehicle?.id}
+        onSave={() => {
+          setIsModalOpen(false);
+          setSelectedVehicle(null);
+          queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+        }}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false);
+          setSelectedVehicle(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Vehicle"
+        description="Are you sure you want to delete this vehicle? This action cannot be undone."
       />
     </div>
   );
