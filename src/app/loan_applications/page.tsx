@@ -59,18 +59,18 @@ export default function LoanApplicationsPage() {
       </div>
 
       <div className="rounded-md border border-border">
-        <Table>
-          <TableHeader>
-            <TableRow>
+      <Table>
+        <TableHeader>
+          <TableRow>
               <TableHead className="text-foreground">Application ID</TableHead>
               <TableHead className="text-foreground">User</TableHead>
               <TableHead className="text-foreground">Vehicle</TableHead>
               <TableHead className="text-foreground">Status</TableHead>
               <TableHead className="text-foreground">Amount</TableHead>
               <TableHead className="text-foreground">Created At</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
             {paginatedApplications?.map((application) => (
               <TableRow key={application.id}>
                 <TableCell className="text-foreground">{application.id}</TableCell>
@@ -87,10 +87,10 @@ export default function LoanApplicationsPage() {
                 </TableCell>
                 <TableCell className="text-foreground">${application.loan_amount}</TableCell>
                 <TableCell className="text-foreground">{new Date(application.created_at).toLocaleDateString()}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       </div>
 
       <div className="mt-4 flex items-center justify-between text-foreground">
@@ -103,16 +103,16 @@ export default function LoanApplicationsPage() {
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="border-border hover:bg-muted"
-          >
-            Previous
+        >
+          Previous
           </Button>
           <Button
             variant="outline"
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage >= totalPages}
             className="border-border hover:bg-muted"
-          >
-            Next
+        >
+          Next
           </Button>
         </div>
       </div>

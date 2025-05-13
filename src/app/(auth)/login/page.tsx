@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLoading } from '@/contexts/LoadingContext';
+import { useToast } from '@/components/ui/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
   const { startLoading, stopLoading } = useLoading();
+  const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +30,27 @@ export default function LoginPage() {
       
       if (error) {
         setError(error.message);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
       } else {
+        toast({
+          title: "Success",
+          description: "Successfully logged in!",
+        });
         router.push('/');
         router.refresh();
       }
     } catch (err) {
-      setError('An unexpected error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMessage);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: errorMessage,
+      });
     } finally {
       stopLoading();
     }

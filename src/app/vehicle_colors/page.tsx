@@ -61,8 +61,8 @@ export default function VehicleColorsPage() {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-foreground">Vehicle Colors</h1>
         <div className="flex gap-2">
-          <input
-            type="text"
+        <input
+          type="text"
             placeholder="Search..."
             className="border rounded px-3 py-1 bg-background text-foreground"
             value={search}
@@ -92,9 +92,9 @@ export default function VehicleColorsPage() {
         <div className="text-destructive text-center">{error}</div>
       ) : (
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
+        <Table>
+          <TableHeader>
+            <TableRow>
                 <TableHead>
                   <button
                     onClick={() => {
@@ -111,11 +111,11 @@ export default function VehicleColorsPage() {
                 </TableHead>
                 <TableHead>Color</TableHead>
                 <TableHead>Created At</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
               {colors.map((color) => (
-                <TableRow key={color.id}>
+              <TableRow key={color.id}>
                   <TableCell>{color.name}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -127,10 +127,10 @@ export default function VehicleColorsPage() {
                     </div>
                   </TableCell>
                   <TableCell>{new Date(color.created_at).toLocaleDateString()}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
         </div>
       )}
 
@@ -139,20 +139,20 @@ export default function VehicleColorsPage() {
           Showing {colors.length} of {count} colors
         </div>
         <div className="flex gap-2">
-          <button
+        <button
             onClick={() => router.push(buildUrl({ page: page - 1 }))}
-            disabled={page === 1}
+          disabled={page === 1}
             className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => router.push(buildUrl({ page: page + 1 }))}
+        >
+          Previous
+        </button>
+        <button
+          onClick={() => router.push(buildUrl({ page: page + 1 }))}
             disabled={page * pageSize >= count}
             className="px-3 py-1 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
+        >
+          Next
+        </button>
         </div>
       </div>
     </div>
