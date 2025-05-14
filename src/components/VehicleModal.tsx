@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import type { DialogContentProps, DialogTitleProps } from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,6 +75,31 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
     color_options: [] as string[],
     is_active: true,
   });
+
+  const resetForm = () => {
+    if (mode === 'add') {
+      setFormData({
+        model_name: '',
+        model_year: new Date().getFullYear(),
+        transmission: 'AT',
+        fuel_type: '',
+        engine_capacity: '',
+        body_type: '',
+        seating_capacity: 5,
+        stock_quantity: 0,
+        monthly_installment_estimate: 0,
+        color_options: [],
+        is_active: true,
+      });
+    } else if (mode === 'edit' && vehicleId) {
+      fetchVehicle();
+    }
+  };
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
 
   useEffect(() => {
     if (mode === 'edit' && vehicleId) {
@@ -151,6 +177,7 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
       }
 
       queryClient.invalidateQueries({ queryKey: ['vehicles'] });
+      resetForm();
       onSave();
       onClose();
     } catch (err: any) {
@@ -162,45 +189,43 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] bg-background">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
-          <DialogTitle className="text-foreground">
+          <DialogTitle>
             {mode === 'add' ? 'Add New Vehicle' : 'Edit Vehicle'}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="model_name" className="text-foreground">Model Name</Label>
+              <Label htmlFor="model_name">Model Name</Label>
               <Input
                 id="model_name"
                 value={formData.model_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, model_name: e.target.value }))}
-                className="bg-background text-foreground border-border"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="model_year" className="text-foreground">Model Year</Label>
+              <Label htmlFor="model_year">Model Year</Label>
               <Input
                 id="model_year"
                 type="number"
                 value={formData.model_year || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, model_year: parseInt(e.target.value) || 0 }))}
-                className="bg-background text-foreground border-border"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="transmission" className="text-foreground">Transmission</Label>
+              <Label htmlFor="transmission">Transmission</Label>
               <Select
                 value={formData.transmission}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, transmission: value }))}
               >
-                <SelectTrigger className="bg-background text-foreground border-border">
+                <SelectTrigger>
                   <SelectValue placeholder="Select transmission" />
                 </SelectTrigger>
                 <SelectContent>
@@ -211,77 +236,71 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fuel_type" className="text-foreground">Fuel Type</Label>
+              <Label htmlFor="fuel_type">Fuel Type</Label>
               <Input
                 id="fuel_type"
                 value={formData.fuel_type}
                 onChange={(e) => setFormData(prev => ({ ...prev, fuel_type: e.target.value }))}
-                className="bg-background text-foreground border-border"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="engine_capacity" className="text-foreground">Engine Capacity</Label>
+              <Label htmlFor="engine_capacity">Engine Capacity</Label>
               <Input
                 id="engine_capacity"
                 value={formData.engine_capacity}
                 onChange={(e) => setFormData(prev => ({ ...prev, engine_capacity: e.target.value }))}
-                className="bg-background text-foreground border-border"
                 placeholder="e.g., 1.5L"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="body_type" className="text-foreground">Body Type</Label>
+              <Label htmlFor="body_type">Body Type</Label>
               <Input
                 id="body_type"
                 value={formData.body_type}
                 onChange={(e) => setFormData(prev => ({ ...prev, body_type: e.target.value }))}
-                className="bg-background text-foreground border-border"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="seating_capacity" className="text-foreground">Seating Capacity</Label>
+              <Label htmlFor="seating_capacity">Seating Capacity</Label>
               <Input
                 id="seating_capacity"
                 type="number"
                 value={formData.seating_capacity || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, seating_capacity: parseInt(e.target.value) || 0 }))}
-                className="bg-background text-foreground border-border"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stock_quantity" className="text-foreground">Stock Quantity</Label>
+              <Label htmlFor="stock_quantity">Stock Quantity</Label>
               <Input
                 id="stock_quantity"
                 type="number"
                 value={formData.stock_quantity || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))}
-                className="bg-background text-foreground border-border"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="monthly_installment_estimate" className="text-foreground">Monthly Installment Estimate</Label>
+              <Label htmlFor="monthly_installment_estimate">Monthly Installment Estimate</Label>
               <Input
                 id="monthly_installment_estimate"
                 type="number"
                 value={formData.monthly_installment_estimate || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, monthly_installment_estimate: parseFloat(e.target.value) || 0 }))}
-                className="bg-background text-foreground border-border"
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-foreground">Color Options</Label>
+              <Label>Color Options</Label>
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -296,7 +315,7 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
+                <PopoverContent className="w-full p-0">
                   <Command>
                     <CommandInput placeholder="Search colors..." />
                     <CommandList>
@@ -309,6 +328,7 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
                             onSelect={() => {
                               handleColorSelect(color.id);
                             }}
+                            className="cursor-pointer"
                           >
                             <div className="flex items-center">
                               <Check
@@ -330,8 +350,14 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
                 {formData.color_options.map((colorId) => {
                   const color = colors.find(c => c.id === colorId);
                   return color ? (
-                    <Badge key={colorId} variant="secondary">
+                    <Badge 
+                      key={colorId} 
+                      variant="secondary"
+                      className="flex items-center gap-1 cursor-pointer hover:bg-destructive/10"
+                      onClick={() => handleColorSelect(colorId)}
+                    >
                       {color.color_name}
+                      <span className="text-xs">×</span>
                     </Badge>
                   ) : null;
                 })}
@@ -340,11 +366,10 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
 
             <div className="flex items-center space-x-2">
               <Switch
-                id="is_active"
                 checked={formData.is_active}
                 onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked }))}
               />
-              <Label htmlFor="is_active" className="text-foreground">Active</Label>
+              <Label htmlFor="is_active">Active</Label>
             </div>
           </div>
 
@@ -356,8 +381,7 @@ export default function VehicleModal({ isOpen, onClose, mode, vehicleId, onSave 
             <Button
               type="button"
               variant="outline"
-              onClick={onClose}
-              className="border-border hover:bg-muted"
+              onClick={handleClose}
             >
               Cancel
             </Button>

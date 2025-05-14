@@ -21,6 +21,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 
 export default function VehiclesPage() {
@@ -62,6 +63,8 @@ export default function VehiclesPage() {
   };
 
   const handleDeleteConfirm = async () => {
+    if (!selectedVehicle?.id) return;
+    
     try {
       const { error } = await supabase
         .from('vehicles')
@@ -175,11 +178,11 @@ export default function VehiclesPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleEdit(vehicle)}>
+                      <DropdownMenuItem onSelect={() => handleEdit(vehicle)}>
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDelete(vehicle)}>
+                      <DropdownMenuItem onSelect={() => handleDelete(vehicle)}>
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                       </DropdownMenuItem>
