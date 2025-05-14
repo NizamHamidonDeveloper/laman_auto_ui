@@ -22,9 +22,10 @@ type UserModalProps = {
   mode: 'view' | 'edit' | 'add';
   userId?: string;
   onSave?: (user: Partial<User>) => void;
+  onSuccess?: () => void;
 };
 
-export default function UserModal({ isOpen, onClose, mode, userId, onSave }: UserModalProps) {
+export default function UserModal({ isOpen, onClose, mode, userId, onSave, onSuccess }: UserModalProps) {
   const [user, setUser] = useState<Partial<User>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +96,7 @@ export default function UserModal({ isOpen, onClose, mode, userId, onSave }: Use
       }
       console.log('User saved successfully');
       onSave?.(user);
+      onSuccess?.();
       onClose();
     } catch (err) {
       console.error('Error saving user:', err);

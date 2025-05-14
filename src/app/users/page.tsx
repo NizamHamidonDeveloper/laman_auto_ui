@@ -106,6 +106,7 @@ export default function UsersPage() {
       <UserModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        mode="add"
         onSuccess={() => {
           setIsModalOpen(false);
           // Refetch users
