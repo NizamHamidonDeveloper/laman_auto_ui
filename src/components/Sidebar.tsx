@@ -31,7 +31,9 @@ export default function Sidebar() {
   return (
     <div className="fixed left-0 top-0 w-64 h-screen bg-background border-r border-border flex flex-col">
       <div className="p-4 border-b border-border flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Laman Auto</h1>
+        <Link href="/">
+          <h1 className="text-xl font-semibold text-foreground">Laman Auto</h1>
+        </Link>
         <ThemeToggle />
       </div>
       <div className="flex-1 overflow-y-auto p-4">

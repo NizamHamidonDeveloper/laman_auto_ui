@@ -10,14 +10,15 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { Home, Users, Car, Palette, ClipboardList, FileText, LogOut } from "lucide-react";
+import { Home, Users, Car, Palette, ClipboardList, FileText, LogOut, Globe } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/client";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: Home },
+  { title: "Landing Page", url: "/", icon: Globe },
+  { title: "Dashboard", url: "/dashboard", icon: Home },
   { title: "Users Management", url: "/users", icon: Users },
   { title: "Dealer Accounts", url: "/dealer_accounts", icon: Users },
   { title: "Vehicles", url: "/vehicles", icon: Car },

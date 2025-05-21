@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Laman Auto UI
+
+A modern automotive platform built with Next.js, focusing on vehicle management, loan applications, and dealer interactions.
+
+## Landing Page Structure
+
+The landing page is organized in the following directory structure:
+
+```
+src/
+├── app/
+│   └── (main)/
+│       └── page.tsx              # Main landing page
+│       └── components/
+│           ├── Hero.tsx         # Hero section with main CTA
+│           ├── Features.tsx     # Key features section
+│           ├── VehicleShowcase.tsx  # Featured vehicles display
+│           ├── Testimonials.tsx # Customer testimonials
+│           ├── HowItWorks.tsx   # Process explanation section
+│           └── CTA.tsx          # Call-to-action section
+```
+
+### Key Components
+
+1. **Hero Section** (`Hero.tsx`)
+   - Main headline and subheadline
+   - Search functionality for vehicles
+   - Primary call-to-action buttons
+
+2. **Features Section** (`Features.tsx`)
+   - Key platform features
+   - Benefits for users
+   - Visual icons and descriptions
+
+3. **Vehicle Showcase** (`VehicleShowcase.tsx`)
+   - Featured vehicles display
+   - Filtering options
+   - Quick view functionality
+
+4. **Testimonials** (`Testimonials.tsx`)
+   - Customer success stories
+   - Rating display
+   - User feedback
+
+5. **How It Works** (`HowItWorks.tsx`)
+   - Step-by-step process explanation
+   - Visual guides
+   - Interactive elements
+
+6. **Call to Action** (`CTA.tsx`)
+   - Secondary conversion points
+   - Newsletter signup
+   - Contact information
 
 ## Getting Started
 
-First, run the development server:
-
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone [repository-url]
+cd laman-auto-ui
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Run the development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) to view the landing page.
 
-## Learn More
+## Development Guidelines
 
-To learn more about Next.js, take a look at the following resources:
+### Landing Page Development
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. **Component Structure**
+   - Each section is a separate component
+   - Components are located in `src/app/(main)/components/`
+   - Use TypeScript for type safety
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Styling**
+   - Uses Tailwind CSS for styling
+   - Follow the existing design system
+   - Maintain responsive design
 
-## Deploy on Vercel
+3. **Best Practices**
+   - Keep components modular and reusable
+   - Implement proper error handling
+   - Follow accessibility guidelines
+   - Optimize images and assets
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Key Files to Focus On
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/app/(main)/page.tsx` - Main landing page layout
+- `src/app/(main)/components/*` - Individual section components
+- `src/types/` - TypeScript type definitions
+- `src/lib/` - Utility functions and helpers
+
+## Contributing
+
+1. Create a new branch for your feature
+2. Make your changes
+3. Submit a pull request
+4. Ensure all tests pass
+5. Update documentation as needed
+
+## Tech Stack
+
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Lucide Icons
+- Supabase (Backend)
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
