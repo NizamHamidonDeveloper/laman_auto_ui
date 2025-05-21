@@ -11,16 +11,43 @@ export function Header() {
   const router = useRouter();
   const supabase = createClient();
   const [user, setUser] = useState<any>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      if (user) {
+        // Fetch user role from the users table
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && userData) {
+          setUserRole(userData.role);
+        }
+      }
     };
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (!error && userData) {
+          setUserRole(userData.role);
+        }
+      } else {
+        setUserRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -44,9 +71,15 @@ export function Header() {
           <nav className="flex items-center gap-4">
             {user ? (
               <>
-                <Button variant="ghost" onClick={() => router.push('/dashboard')}>
-                  Dashboard
-                </Button>
+                {userRole === 'admin' ? (
+                  <Button variant="ghost" onClick={() => router.push('/dashboard')}>
+                    Dashboard
+                  </Button>
+                ) : userRole === 'user' ? (
+                  <Button variant="ghost" onClick={() => router.push('/profile')}>
+                    Profile
+                  </Button>
+                ) : null}
                 <Button variant="destructive" onClick={handleLogout}>
                   Logout
                 </Button>

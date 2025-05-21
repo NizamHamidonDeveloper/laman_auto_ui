@@ -37,18 +37,56 @@ export default function VehiclesPage() {
   const queryClient = useQueryClient();
 
   const fetchVehicles = async () => {
-    const { data, error } = await supabase
-      .from('vehicles')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      // First get the user's role
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-    if (error) throw error;
-    return data;
+      // Get the JWT token
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log('JWT Token:', session?.access_token);
+      
+      // Decode and log the JWT payload
+      if (session?.access_token) {
+        const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+        console.log('JWT Payload:', payload);
+        console.log('User Role from JWT:', payload.role);
+      }
+
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (userError) throw userError;
+      if (!userData) throw new Error('User role not found');
+
+      console.log('User Role from Database:', userData.role);
+
+      // If user is admin, fetch all vehicles
+      if (userData.role === 'authenticated') {
+        const { data, error } = await supabase
+          .from('vehicles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        return data;
+      } else {
+        // For non-admin users, you might want to show a message or redirect
+        throw new Error('You do not have permission to view vehicles');
+      }
+    } catch (error: any) {
+      console.error('Error fetching vehicles:', error);
+      throw error;
+    }
   };
 
   const { data: vehicles, isLoading, error } = useQuery({
     queryKey: ['vehicles'],
-    queryFn: fetchVehicles
+    queryFn: fetchVehicles,
+    retry: false // Don't retry on permission errors
   });
 
   const handleEdit = (vehicle: any) => {
@@ -103,7 +141,20 @@ export default function VehiclesPage() {
   const paginatedVehicles = filteredVehicles?.slice(startIndex, endIndex);
 
   if (isLoading) return <div className="text-foreground">Loading...</div>;
-  if (error) return <div className="text-destructive">Error loading vehicles</div>;
+  if (error) return (
+    <div className="p-6 bg-background min-h-screen">
+      <div className="text-destructive text-center">
+        {error.message === 'You do not have permission to view vehicles' ? (
+          <div>
+            <h2 className="text-xl font-bold mb-2">Access Denied</h2>
+            <p>You do not have permission to view vehicles. Please contact an administrator if you believe this is an error.</p>
+          </div>
+        ) : (
+          <div>Error loading vehicles: {error.message}</div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6 bg-background min-h-screen">
